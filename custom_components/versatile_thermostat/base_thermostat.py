@@ -130,47 +130,54 @@ class BaseThermostat(ClimateEntity, RestoreEntity):
     _motion_state: bool
     _presence_state: bool
     _window_auto_state: bool
-    #PR - Adding Window ByPass
     _window_bypass_state: bool
     _underlyings: list[UnderlyingEntity]
     _last_change_time: datetime
 
-    _entity_component_unrecorded_attributes = ClimateEntity._entity_component_unrecorded_attributes.union(frozenset(
-        {
-            "type",
-            "eco_temp",
-            "boost_temp",
-            "comfort_temp",
-            "eco_away_temp",
-            "boost_away_temp",
-            "comfort_away_temp",
-            "power_temp",
-            "ac_mode",
-            "current_power_max",
-            "saved_preset_mode",
-            "saved_target_temp",
-            "saved_hvac_mode",
-            "security_delay_min",
-            "security_min_on_percent",
-            "security_default_on_percent",
-            "last_temperature_datetime",
-            "last_ext_temperature_datetime",
-            "minimal_activation_delay_sec",
-            "device_power",
-            "mean_cycle_power",
-            "last_update_datetime",
-            "timezone",
-            "window_sensor_entity_id",
-            "window_delay_sec",
-            "window_auto_open_threshold",
-            "window_auto_close_threshold",
-            "window_auto_max_duration",
-            "motion_sensor_entity_id",
-            "presence_sensor_entity_id",
-            "power_sensor_entity_id",
-            "max_power_sensor_entity_id",
-        }
-    ))
+    _entity_component_unrecorded_attributes = (
+        ClimateEntity._entity_component_unrecorded_attributes.union(
+            frozenset(
+                {
+                    "is_on",
+                    "type",
+                    "eco_temp",
+                    "boost_temp",
+                    "comfort_temp",
+                    "eco_away_temp",
+                    "boost_away_temp",
+                    "comfort_away_temp",
+                    "power_temp",
+                    "ac_mode",
+                    "current_power_max",
+                    "saved_preset_mode",
+                    "saved_target_temp",
+                    "saved_hvac_mode",
+                    "security_delay_min",
+                    "security_min_on_percent",
+                    "security_default_on_percent",
+                    "last_temperature_datetime",
+                    "last_ext_temperature_datetime",
+                    "minimal_activation_delay_sec",
+                    "device_power",
+                    "mean_cycle_power",
+                    "last_update_datetime",
+                    "timezone",
+                    "window_sensor_entity_id",
+                    "window_delay_sec",
+                    "window_auto_open_threshold",
+                    "window_auto_close_threshold",
+                    "window_auto_max_duration",
+                    "motion_sensor_entity_id",
+                    "presence_sensor_entity_id",
+                    "power_sensor_entity_id",
+                    "max_power_sensor_entity_id",
+                    "temperature_unit",
+                    "is_device_active",
+                    "target_temperature_step",
+                }
+            )
+        )
+    )
 
     def __init__(self, hass: HomeAssistant, unique_id, name, entry_infos) -> None:
         """Initialize the thermostat."""
@@ -291,6 +298,8 @@ class BaseThermostat(ClimateEntity, RestoreEntity):
         self._ext_temp_sensor_entity_id = entry_infos.get(CONF_EXTERNAL_TEMP_SENSOR)
         self._attr_max_temp = entry_infos.get(CONF_TEMP_MAX)
         self._attr_min_temp = entry_infos.get(CONF_TEMP_MIN)
+        # Default value not configurable
+        self._attr_target_temperature_step = 0.1
         self._power_sensor_entity_id = entry_infos.get(CONF_POWER_SENSOR)
         self._max_power_sensor_entity_id = entry_infos.get(CONF_MAX_POWER_SENSOR)
         self._window_sensor_entity_id = entry_infos.get(CONF_WINDOW_SENSOR)
@@ -621,7 +630,7 @@ class BaseThermostat(ClimateEntity, RestoreEntity):
                         STATE_UNAVAILABLE,
                         STATE_UNKNOWN,
                     ):
-                        self._window_state = (window_state.state == STATE_ON)
+                        self._window_state = window_state.state == STATE_ON
                         _LOGGER.debug(
                             "%s - Window state have been retrieved: %s",
                             self,
@@ -762,17 +771,17 @@ class BaseThermostat(ClimateEntity, RestoreEntity):
 
     @property
     def is_over_climate(self) -> bool:
-        """ True if the Thermostat is over_climate"""
+        """True if the Thermostat is over_climate"""
         return False
 
     @property
     def is_over_switch(self) -> bool:
-        """ True if the Thermostat is over_switch"""
+        """True if the Thermostat is over_switch"""
         return False
 
     @property
     def is_over_valve(self) -> bool:
-        """ True if the Thermostat is over_valve"""
+        """True if the Thermostat is over_valve"""
         return False
 
     @property
@@ -899,27 +908,6 @@ class BaseThermostat(ClimateEntity, RestoreEntity):
         return self._cur_temp
 
     @property
-    def target_temperature_step(self) -> float | None:
-        """Return the supported step of target temperature."""
-        return None
-
-    @property
-    def target_temperature_high(self) -> float | None:
-        """Return the highbound target temperature we try to reach.
-
-        Requires ClimateEntityFeature.TARGET_TEMPERATURE_RANGE.
-        """
-        return None
-
-    @property
-    def target_temperature_low(self) -> float | None:
-        """Return the lowbound target temperature we try to reach.
-
-        Requires ClimateEntityFeature.TARGET_TEMPERATURE_RANGE.
-        """
-        return None
-
-    @property
     def is_aux_heat(self) -> bool | None:
         """Return true if aux heater.
 
@@ -933,10 +921,7 @@ class BaseThermostat(ClimateEntity, RestoreEntity):
         if not self._device_power:
             return None
 
-        return float(
-            self._device_power
-            * self._prop_algorithm.on_percent
-        )
+        return float(self._device_power * self._prop_algorithm.on_percent)
 
     @property
     def total_energy(self) -> float | None:
@@ -963,7 +948,6 @@ class BaseThermostat(ClimateEntity, RestoreEntity):
         """Get the window_auto_state"""
         return STATE_ON if self._window_auto_state else STATE_OFF
 
-    #PR - Adding Window ByPass
     @property
     def window_bypass_state(self) -> bool | None:
         """Get the Window Bypass"""
@@ -1032,6 +1016,11 @@ class BaseThermostat(ClimateEntity, RestoreEntity):
     def nb_underlying_entities(self) -> int:
         """Returns the number of underlying entities"""
         return len(self._underlyings)
+
+    @property
+    def is_on(self) -> bool:
+        """True if the VTherm is on (! HVAC_OFF)"""
+        return self.hvac_mode and self.hvac_mode != HVACMode.OFF
 
     def underlying_entity_id(self, index=0) -> str | None:
         """The climate_entity_id. Added for retrocompatibility reason"""
@@ -1219,7 +1208,7 @@ class BaseThermostat(ClimateEntity, RestoreEntity):
 
     async def _async_internal_set_temperature(self, temperature):
         """Set the target temperature and the target temperature of underlying climate if any
-           For testing purpose you can pass an event_timestamp.
+        For testing purpose you can pass an event_timestamp.
         """
         self._target_temp = temperature
         return
@@ -1307,7 +1296,7 @@ class BaseThermostat(ClimateEntity, RestoreEntity):
                 _LOGGER.debug(
                     "Window delay condition is not satisfied. Ignore window event"
                 )
-                self._window_state = (old_state.state == STATE_ON)
+                self._window_state = old_state.state == STATE_ON
                 return
 
             _LOGGER.debug("%s - Window delay condition is satisfied", self)
@@ -1318,13 +1307,14 @@ class BaseThermostat(ClimateEntity, RestoreEntity):
                 _LOGGER.debug("%s - no change in window state. Forget the event")
                 return
 
+            self._window_state = new_state.state == STATE_ON
 
-            self._window_state = (new_state.state == STATE_ON)
-
-            #PR - Adding Window ByPass
+            # PR - Adding Window ByPass
             _LOGGER.debug("%s - Window ByPass is : %s", self, self._window_bypass_state)
             if self._window_bypass_state:
-                _LOGGER.info("%s - Window ByPass is activated. Ignore window event", self)
+                _LOGGER.info(
+                    "%s - Window ByPass is activated. Ignore window event", self
+                )
             else:
                 if not self._window_state:
                     _LOGGER.info(
@@ -1587,7 +1577,7 @@ class BaseThermostat(ClimateEntity, RestoreEntity):
         await self.async_control_heating(force=True)
 
     async def _async_update_presence(self, new_state):
-        _LOGGER.debug("%s - Updating presence. New state is %s", self, new_state)
+        _LOGGER.info("%s - Updating presence. New state is %s", self, new_state)
         self._presence_state = new_state
         if self._attr_preset_mode in HIDDEN_PRESETS or self._presence_on is False:
             _LOGGER.info(
@@ -1605,24 +1595,6 @@ class BaseThermostat(ClimateEntity, RestoreEntity):
         if self._attr_preset_mode not in [PRESET_BOOST, PRESET_COMFORT, PRESET_ECO]:
             return
 
-        # Change temperature with preset named _away
-        # new_temp = None
-        # if new_state == STATE_ON or new_state == STATE_HOME:
-        #    new_temp = self._presets[self._attr_preset_mode]
-        #    _LOGGER.info(
-        #        "%s - Someone is back home. Restoring temperature to %.2f",
-        #        self,
-        #        new_temp,
-        #    )
-        # else:
-        #    new_temp = self._presets_away[
-        #        self.get_preset_away_name(self._attr_preset_mode)
-        #    ]
-        #    _LOGGER.info(
-        #        "%s - No one is at home. Apply temperature %.2f",
-        #        self,
-        #        new_temp,
-        #    )
         new_temp = self.find_preset_temp(self.preset_mode)
         if new_temp is not None:
             _LOGGER.debug(
@@ -1715,8 +1687,8 @@ class BaseThermostat(ClimateEntity, RestoreEntity):
             and self.hvac_mode != HVACMode.OFF
         ):
             if (
-                not self.proportional_algorithm
-                or self.proportional_algorithm.on_percent <= 0.0
+                self.proportional_algorithm
+                and self.proportional_algorithm.on_percent <= 0.0
             ):
                 _LOGGER.info(
                     "%s - Start auto detection of open window slope=%.3f but no heating detected (on_percent<=0). Forget the event",
@@ -1827,7 +1799,15 @@ class BaseThermostat(ClimateEntity, RestoreEntity):
             self._device_power,
         )
 
-        ret = (self._current_power + self._device_power) >= self._current_power_max
+        if self.is_over_climate:
+            power_consumption_max = self._device_power
+        else:
+            power_consumption_max = max(
+                self._device_power / self.nb_underlying_entities,
+                self._device_power * self._prop_algorithm.on_percent,
+            )
+
+        ret = (self._current_power + power_consumption_max) >= self._current_power_max
         if not self._overpowering_state and ret and self._hvac_mode != HVACMode.OFF:
             _LOGGER.warning(
                 "%s - overpowering is detected. Heater preset will be set to 'power'",
@@ -1845,6 +1825,7 @@ class BaseThermostat(ClimateEntity, RestoreEntity):
                     "current_power": self._current_power,
                     "device_power": self._device_power,
                     "current_power_max": self._current_power_max,
+                    "current_power_consumption": power_consumption_max,
                 },
             )
 
@@ -1872,7 +1853,10 @@ class BaseThermostat(ClimateEntity, RestoreEntity):
                 },
             )
 
-        self._overpowering_state = ret
+        if self._overpowering_state != ret:
+            self._overpowering_state = ret
+            self.update_custom_attributes()
+
         return self._overpowering_state
 
     async def check_security(self) -> bool:
@@ -2098,6 +2082,7 @@ class BaseThermostat(ClimateEntity, RestoreEntity):
         """Update the custom extra attributes for the entity"""
 
         self._attr_extra_state_attributes: dict(str, str) = {
+            "is_on": self.is_on,
             "hvac_action": self.hvac_action,
             "hvac_mode": self.hvac_mode,
             "preset_mode": self.preset_mode,
@@ -2117,6 +2102,7 @@ class BaseThermostat(ClimateEntity, RestoreEntity):
             "power_temp": self._power_temp,
             # Already in super class - "target_temp": self.target_temperature,
             # Already in super class - "current_temp": self._cur_temp,
+            "target_temperature_step": self.target_temperature_step,
             "ext_current_temperature": self._cur_ext_temp,
             "ac_mode": self._ac_mode,
             "current_power": self._current_power,
@@ -2129,7 +2115,6 @@ class BaseThermostat(ClimateEntity, RestoreEntity):
             "overpowering_state": self.overpowering_state,
             "presence_state": self._presence_state,
             "window_auto_state": self.window_auto_state,
-            #PR - Adding Window ByPass
             "window_bypass_state": self._window_bypass_state,
             "security_delay_min": self._security_delay_min,
             "security_min_on_percent": self._security_min_on_percent,
@@ -2158,6 +2143,8 @@ class BaseThermostat(ClimateEntity, RestoreEntity):
             "presence_sensor_entity_id": self._presence_sensor_entity_id,
             "power_sensor_entity_id": self._power_sensor_entity_id,
             "max_power_sensor_entity_id": self._max_power_sensor_entity_id,
+            "temperature_unit": self.temperature_unit,
+            "is_device_active": self.is_device_active,
         }
 
     @callback
@@ -2256,14 +2243,25 @@ class BaseThermostat(ClimateEntity, RestoreEntity):
         target:
             entity_id: climate.thermostat_1
         """
-        _LOGGER.info("%s - Calling service_set_window_bypass, window_bypass: %s", self, window_bypass)
+        _LOGGER.info(
+            "%s - Calling service_set_window_bypass, window_bypass: %s",
+            self,
+            window_bypass,
+        )
         self._window_bypass_state = window_bypass
         if not self._window_bypass_state and self._window_state:
-            _LOGGER.info("%s - Last window state was open & ByPass is now off. Set hvac_mode to '%s'", self, HVACMode.OFF)
+            _LOGGER.info(
+                "%s - Last window state was open & ByPass is now off. Set hvac_mode to '%s'",
+                self,
+                HVACMode.OFF,
+            )
             self.save_hvac_mode()
             await self.async_set_hvac_mode(HVACMode.OFF)
         if self._window_bypass_state and self._window_state:
-            _LOGGER.info("%s - Last window state was open & ByPass is now on. Set hvac_mode to last available mode", self)
+            _LOGGER.info(
+                "%s - Last window state was open & ByPass is now on. Set hvac_mode to last available mode",
+                self,
+            )
             await self.restore_hvac_mode(True)
         self.update_custom_attributes()
 

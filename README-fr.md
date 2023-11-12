@@ -51,7 +51,7 @@
 - [Attributs personnalisés](#attributs-personnalisés)
 - [Quelques résultats](#quelques-résultats)
 - [Encore mieux](#encore-mieux)
-  - [Bien mieux avec le Veersatile Thermostat UI Card](#bien-mieux-avec-le-veersatile-thermostat-ui-card)
+  - [Bien mieux avec le Versatile Thermostat UI Card](#bien-mieux-avec-le-versatile-thermostat-ui-card)
   - [Encore mieux avec le composant Scheduler !](#encore-mieux-avec-le-composant-scheduler-)
   - [Encore bien mieux avec la custom:simple-thermostat front integration](#encore-bien-mieux-avec-la-customsimple-thermostat-front-integration)
   - [Toujours mieux avec Apex-chart pour régler votre thermostat](#toujours-mieux-avec-apex-chart-pour-régler-votre-thermostat)
@@ -85,7 +85,7 @@ Ce composant personnalisé pour Home Assistant est une mise à niveau et est une
 La puissance de l'appareil doit maintenant être la puissance totale de tous les appareils controlée par le VTherm. Cela permet d'avoir des équipements hétérogènes de puissance différente. Dans le cas de plusieurs appareils contrôlés par un seul VTherm, vous devrez éditer et changer la valeur `device_power`. Vous devez configurer la puissance totale de tous les appareils.
 
 # Merci pour la bière [buymecoffee](https://www.buymeacoffee.com/jmcollin78)
-Un grand merci à @salabur, @pvince83, @bergoglio, @EPicLURcher, @ecolorado66, @Kriss1670, @maia, @f.maymil, @moutte69, @Jerome pour les bières. Ca fait très plaisir et ça m'encourage à continuer !
+Un grand merci à @salabur, @pvince83, @bergoglio, @EPicLURcher, @ecolorado66, @Kriss1670, @maia, @f.maymil, @moutte69, @Jerome, @Gunnar M pour les bières. Ca fait très plaisir et ça m'encourage à continuer !
 
 
 # Quand l'utiliser et ne pas l'utiliser
@@ -105,7 +105,9 @@ Les installations avec fil pilote et diode d'activation bénéficie d'une option
 ## Incompatibilités
 Certains thermostat de type TRV sont réputés incompatibles avec le Versatile Thermostat. C'est le cas des vannes suivantes :
 1. les vannes POPP de Danfoss avec retour de température. Il est impossible d'éteindre cette vanne et elle s'auto-régule d'elle-même causant des conflits avec le VTherm,
-2. les vannes thermstatiques "Homematic radio". Elles ont un cycle de service incompatible avec une commande par le Versatile Thermostat
+2. les vannes thermstatiques "Homematic radio". Elles ont un cycle de service incompatible avec une commande par le Versatile Thermostat,
+3. les thermostats de type Heatzy qui ne supportent pas les commandes de type set_temperature
+4. les thermostats de type Rointe ont tendance a se réveiller tout seul. Le reste fonctionne normalement.
 
 # Pourquoi une nouvelle implémentation du thermostat ?
 
@@ -735,7 +737,7 @@ Enjoy !
 
 # Encore mieux
 
-## Bien mieux avec le Veersatile Thermostat UI Card
+## Bien mieux avec le Versatile Thermostat UI Card
 Une carte spéciale pour le Versatile Thermostat a été développée (sur la base du Better Thermostat). Elle est dispo ici [Versatile Thermostat UI Card](https://github.com/jmcollin78/versatile-thermostat-ui-card) et propose une vision moderne de tous les status du VTherm :
 
 ![image](https://github.com/jmcollin78/versatile-thermostat-ui-card/blob/master/assets/1.png?raw=true)

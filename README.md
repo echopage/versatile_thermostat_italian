@@ -83,7 +83,7 @@ This custom component for Home Assistant is an upgrade and is a complete rewrite
 The power of the device should now be the total power of all controler devices by the VTherm. This allow to have eterogeneous equipment with different power. In case of multi-devices controlled by a single VTherm you will have to edit and change the `device_power` value. Set the total power of all devices.
 
 # Thanks for the beer [buymecoffee](https://www.buymeacoffee.com/jmcollin78)
-Many thanks to @salabur, @pvince83, @bergoglio, @EPicLURcher, @ecolorado66, @Kriss1670, @maia, @f.maymil, @moutte69, @Jerome for the beers. It's very nice and encourages me to continue!
+Many thanks to @salabur, @pvince83, @bergoglio, @EPicLURcher, @ecolorado66, @Kriss1670, @maia, @f.maymil, @moutte69, @Jerome, @Gunnar M for the beers. It's very nice and encourages me to continue!
 
 # When to use / not use
 This thermostat can control 3 types of equipment:
@@ -103,7 +103,9 @@ Installations with pilot wire and activation diode benefit from an option which 
 
 Some TRV type thermostats are known to be incompatible with the Versatile Thermostat. This is the case for the following valves:
 1. Danfoss POPP valves with temperature feedback. It is impossible to turn off this valve and it self-regulates, causing conflicts with the VTherm,
-2. “Homematic radio” thermostatic valves. They have a duty cycle incompatible with control by the Versatile Thermostat
+2. “Homematic radio” thermostatic valves. They have a duty cycle incompatible with control by the Versatile Thermostat,
+3. Thermostat of type Heatzy which doesn't supports the set_temperature command.
+4. Thermostats of type Rointe tends to awake alone even if VTherm turns it off. Others functions works fine.
 
 # Why another thermostat implementation ?
 
